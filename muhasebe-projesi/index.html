@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Muhasebe</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-wallet"></i> Muhasebe Programı</h1>
+            <p>Gelir ve giderlerinizi kolayca takip edin</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card income-card">
+                <h3>Gelir</h3>
+                <p id="total-income">₺0.00</p>
+                <i class="fas fa-arrow-up icon"></i>
+            </div>
+            <div class="card expense-card">
+                <h3>Gider</h3>
+                <p id="total-expense">₺0.00</p>
+                <i class="fas fa-arrow-down icon"></i>
+            </div>
+            <div class="card balance-card">
+                <h3>Net Bakiye</h3>
+                <p id="net-balance">₺0.00</p>
+                <i class="fas fa-coins icon"></i>
+            </div>
+        </div>
+
+        <section class="content-grid">
+            <div class="form-container glass-panel">
+                <h2><i class="fas fa-plus-circle"></i> Yeni İşlem</h2>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label for="description">Açıklama</label>
+                        <input type="text" id="description" placeholder="Örn: Market alışverişi" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amount">Tutar (₺)</label>
+                        <input type="number" id="amount" placeholder="0.00" step="0.01" min="0.01" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>İşlem Türü</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="type" value="income" checked>
+                                <span class="radio-custom income"><i class="fas fa-plus"></i> Gelir</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="type" value="expense">
+                                <span class="radio-custom expense"><i class="fas fa-minus"></i> Gider</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </form>
+            </div>
+
+            <div class="list-container glass-panel">
+                <h2><i class="fas fa-list"></i> İşlem Geçmişi</h2>
+                <ul id="transaction-list" class="transaction-list">
+                    <!-- Transactions will be added here dynamically -->
+                    <!-- <li class="transaction-item income">
+                        <div class="info">
+                            <h4>Maaş</h4>
+                            <span class="date">12.05.2024</span>
+                        </div>
+                        <div class="amount-action">
+                            <span class="amount">+₺15,000.00</span>
+                            <button class="delete-btn"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li> -->
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
