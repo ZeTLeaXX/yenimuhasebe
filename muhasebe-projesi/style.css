@@ -330,18 +330,18 @@ header p {
 .transaction-item.income .amount { color: var(--success-color); }
 .transaction-item.expense .amount { color: var(--danger-color); }
 
-.delete-btn {
-    background: transparent;
+.delete-btn, .icon-btn {
+    background: none;
     border: none;
-    color: var(--text-dim);
+    color: var(--danger-color);
     cursor: pointer;
+    font-size: 1.1rem;
     padding: 0.5rem;
-    border-radius: 8px;
-    transition: all 0.2s;
+    transition: transform 0.2s;
 }
 
-.delete-btn:hover {
-    color: var(--danger-color);
+.delete-btn:hover, .icon-btn:hover {
+    transform: scale(1.1);
     background: rgba(239, 68, 68, 0.1);
 }
 

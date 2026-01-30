@@ -30,10 +30,53 @@ class Auth {
         const user = users.find(u => u.username === username && u.password === password);
 
         if (user) {
+            if (user.isBanned) {
+                return { success: false, message: 'Hesabınız yasaklanmıştır. Lütfen yönetici ile iletişime geçin.' };
+            }
             localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
             return { success: true, user };
         }
         return { success: false, message: 'Kullanıcı adı veya şifre hatalı.' };
+    }
+
+    static banUser(id) {
+        let users = this.getUsers();
+        const userIndex = users.findIndex(u => u.id === id);
+        if (userIndex !== -1) {
+            users[userIndex].isBanned = true;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            return true;
+        }
+        return false;
+    }
+
+    static unbanUser(id) {
+        let users = this.getUsers();
+        const userIndex = users.findIndex(u => u.id === id);
+        if (userIndex !== -1) {
+            users[userIndex].isBanned = false;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            return true;
+        }
+        return false;
+    }
+
+    static toggleAdmin(id) {
+        let users = this.getUsers();
+        const userIndex = users.findIndex(u => u.id === id);
+        
+        // Prevent removing own admin rights if it's the current user (safety check done in UI mostly but good here too)
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.id === id && users[userIndex].isAdmin) {
+             // Optional: prevent self-demotion logic if needed, but basic implementation allows flexibility
+        }
+
+        if (userIndex !== -1) {
+            users[userIndex].isAdmin = !users[userIndex].isAdmin;
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            return users[userIndex].isAdmin;
+        }
+        return null; // User not found
     }
 
     static logout() {

@@ -45,7 +45,6 @@
     <script>
         // Protect Route
         const currentUser = Auth.requireAdmin();
-
         const userList = document.getElementById('user-list');
 
         function loadUsers() {
@@ -53,23 +52,65 @@
             userList.innerHTML = '';
 
             users.forEach(user => {
+                // Skip rendering the current user in a way that prevents self-deletion/demotion easily from this specific UI logic if desired, 
+                // but usually we display everyone. Just disabling dangerous buttons for self is better UX.
+                const isSelf = user.id === currentUser.id;
+
                 const item = document.createElement('li');
                 item.className = 'transaction-item';
 
+                // Visual styles for banned users
+                if (user.isBanned) {
+                    item.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    item.style.borderLeft = '4px solid #ef4444';
+                }
+
                 const isAdminBadge = user.isAdmin ? '<span style="color: #fbbf24; font-size: 0.8em; margin-left: 0.5rem;"><i class="fas fa-crown"></i> Admin</span>' : '';
-                const deleteBtn = !user.isAdmin ? `
-                    <button class="delete-btn" onclick="deleteUser(${user.id})" style="color: var(--danger-color);">
-                        <i class="fas fa-trash"></i> Sil
-                    </button>
-                ` : '';
+                const bannedBadge = user.isBanned ? '<span style="color: #ef4444; font-size: 0.8em; margin-left: 0.5rem;"><i class="fas fa-ban"></i> Yasaklı</span>' : '';
+
+                // Buttons logic
+                let actionButtons = '';
+
+                if (!isSelf) {
+                    // Admin Toggle Button
+                    const adminBtnText = user.isAdmin ? 'Yönetici Al' : 'Yönetici Yap';
+                    const adminBtnIcon = user.isAdmin ? 'fa-user-minus' : 'fa-user-plus';
+                    const adminBtnColor = user.isAdmin ? 'var(--text-dim)' : '#fbbf24';
+
+                    actionButtons += `
+                        <button class="icon-btn" onclick="toggleAdmin(${user.id})" title="${adminBtnText}" style="color: ${adminBtnColor}; margin-right: 10px;">
+                            <i class="fas ${adminBtnIcon}"></i>
+                        </button>
+                    `;
+
+                    // Ban Toggle Button
+                    const banBtnText = user.isBanned ? 'Yasağı Kaldır' : 'Yasakla';
+                    const banBtnIcon = user.isBanned ? 'fa-check' : 'fa-ban';
+                    const banBtnColor = user.isBanned ? '#34d399' : '#ef4444';
+
+                    actionButtons += `
+                        <button class="icon-btn" onclick="toggleBan(${user.id})" title="${banBtnText}" style="color: ${banBtnColor}; margin-right: 10px;">
+                            <i class="fas ${banBtnIcon}"></i>
+                        </button>
+                    `;
+
+                    // Delete Button
+                    actionButtons += `
+                        <button class="icon-btn delete-btn" onclick="deleteUser(${user.id})" title="Kullanıcıyı Sil" style="color: var(--danger-color);">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                } else {
+                    actionButtons = '<span style="font-size: 0.8rem; color: var(--text-dim);">(Siz)</span>';
+                }
 
                 item.innerHTML = `
                     <div class="info">
-                        <h4>${user.username} ${isAdminBadge}</h4>
+                        <h4>${user.username} ${isAdminBadge} ${bannedBadge}</h4>
                         <span class="date">ID: ${user.id}</span>
                     </div>
                     <div class="amount-action">
-                        ${deleteBtn}
+                        ${actionButtons}
                     </div>
                 `;
                 userList.appendChild(item);
@@ -91,6 +132,34 @@
 
                     loadUsers();
                 }
+            }
+        }
+
+        function toggleBan(id) {
+            const users = Auth.getUsers();
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            const action = user.isBanned ? 'Yasağı kaldırmak' : 'Yasaklamak';
+            if (confirm(`Bu kullanıcıyı ${action} istediğinize emin misiniz?`)) {
+                if (user.isBanned) {
+                    Auth.unbanUser(id);
+                } else {
+                    Auth.banUser(id);
+                }
+                loadUsers();
+            }
+        }
+
+        function toggleAdmin(id) {
+            const users = Auth.getUsers();
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            const action = user.isAdmin ? 'Yöneticiliğini almak' : 'Yönetici yapmak';
+            if (confirm(`Bu kullanıcıyı ${action} istediğinize emin misiniz?`)) {
+                Auth.toggleAdmin(id);
+                loadUsers();
             }
         }
 
