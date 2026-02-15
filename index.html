@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MuhasebeApp</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+                <h1><i class="fas fa-wallet"></i> MuhasebeApp</h1>
+                <span id="user-display"
+                    style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 20px; font-size: 0.9rem; color: var(--text-dim);"></span>
+            </div>
+            <p>Finansal Durumunuz Kontrol Altında</p>
+
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 1rem;">
+                <a href="chat.html" class="btn-primary" style="width: auto; background: var(--secondary-color);">
+                    <i class="fas fa-comments"></i> Sohbet
+                </a>
+                <a href="admin.html" id="admin-link" class="btn-primary"
+                    style="display: none; width: auto; background: var(--secondary-color);">
+                    <i class="fas fa-shield-alt"></i> Panel
+                </a>
+                <button id="logout-btn" class="btn-primary"
+                    style="width: auto; background: var(--danger-color); margin-top: 0;">
+                    <i class="fas fa-sign-out-alt"></i> Çıkış
+                </button>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="card income-card">
+                <h3>Gelir</h3>
+                <p id="total-income">₺0.00</p>
+                <i class="fas fa-arrow-up icon"></i>
+            </div>
+            <div class="card expense-card">
+                <h3>Gider</h3>
+                <p id="total-expense">₺0.00</p>
+                <i class="fas fa-arrow-down icon"></i>
+            </div>
+            <div class="card balance-card">
+                <h3>Net Bakiye</h3>
+                <p id="net-balance">₺0.00</p>
+                <i class="fas fa-coins icon"></i>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Add Transaction Form -->
+            <div class="glass-panel">
+                <h2><i class="fas fa-plus-circle"></i> Yeni İşlem</h2>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label>İşlem Adı</label>
+                        <input type="text" id="description" placeholder="Örn: Maaş, Fatura..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tarih (Opsiyonel)</label>
+                        <input type="date" id="transaction-date" style="color-scheme: dark;">
+                    </div>
+                    <div class="form-group">
+                        <label>Fiş/Fatura Görseli (Opsiyonel)</label>
+                        <input type="file" id="receipt-file" accept="image/*,application/pdf"
+                            style="color: var(--text-dim);">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="category" required>
+                            <option value="Maas">Maaş / Prim</option>
+                            <option value="Satis">Satış</option>
+                            <option value="Yatirim">Yatırım</option>
+                            <option value="Kira">Kira</option>
+                            <option value="Fatura">Fatura</option>
+                            <option value="Market">Market / Gıda</option>
+                            <option value="Ulasim">Ulaşım</option>
+                            <option value="Eglence">Eğlence</option>
+                            <option value="Saglik">Sağlık</option>
+                            <option value="Diger">Diğer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tutar (₺)</label>
+                        <input type="number" id="amount" placeholder="0" step="0.01" required>
+                    </div>
+
+                    <div class="radio-group" style="display:flex; gap:1rem; margin-bottom:1rem;">
+                        <label class="radio-label"
+                            style="flex:1; cursor:pointer; background:rgba(16,185,129,0.1); padding:0.5rem; border-radius:8px; text-align:center;">
+                            <input type="radio" name="type" value="income" checked>
+                            <span style="color: var(--success-color); margin-left:5px;">Gelir</span>
+                        </label>
+                        <label class="radio-label"
+                            style="flex:1; cursor:pointer; background:rgba(239,68,68,0.1); padding:0.5rem; border-radius:8px; text-align:center;">
+                            <input type="radio" name="type" value="expense">
+                            <span style="color: var(--danger-color); margin-left:5px;">Gider</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-plus"></i> Ekle
+                    </button>
+                </form>
+            </div>
+
+            <!-- Recent Transactions (List) -->
+            <div class="glass-panel">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+                    <!-- Link to History Page -->
+                    <a href="history.html" style="text-decoration:none; color:inherit;">
+                        <h2><i class="fas fa-list"></i> Geçmiş İşlemler <i class="fas fa-external-link-alt"
+                                style="font-size:0.7em; margin-left:5px; color:var(--primary-color);"></i></h2>
+                    </a>
+
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="exportToPDF()" class="btn-primary"
+                            style="width: auto; background: var(--danger-color); font-size: 0.85rem; padding: 0.5rem 1rem;">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button onclick="exportToExcel()" class="btn-primary"
+                            style="width: auto; background: var(--success-color); font-size: 0.85rem; padding: 0.5rem 1rem;">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters" style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                    <input type="text" id="search-input" placeholder="Ara..." style="flex: 1;">
+                    <select id="filter-type" style="width: 120px;">
+                        <option value="all">Tümü</option>
+                        <option value="income">Gelir</option>
+                        <option value="expense">Gider</option>
+                    </select>
+                </div>
+
+                <div class="list-container">
+                    <ul id="transaction-list" class="transaction-list">
+                        <!-- Transactions will be populated here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section (Moved to Bottom) -->
+        <div class="glass-panel" style="margin-bottom: 0;">
+            <h2><i class="fas fa-chart-pie"></i> Analiz & Rapor</h2>
+            <div style="height: 350px; position: relative;">
+                <canvas id="analysisChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
