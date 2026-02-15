@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Paneli - Muhasebe Programı</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-alt"></i> Admin Paneli</h1>
+            <p>Kullanıcı Yönetimi</p>
+        </header>
+
+        <section class="content-grid" style="grid-template-columns: 1fr;">
+            <div class="glass-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2><i class="fas fa-users"></i> Kayıtlı Kullanıcılar</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="chat.html" class="btn-primary"
+                            style="width: auto; background: var(--secondary-color);">
+                            <i class="fas fa-comments"></i> Sohbet
+                        </a>
+                        <a href="index.html" class="btn-primary" style="width: auto;">
+                            <i class="fas fa-home"></i> Uygulamaya Dön
+                        </a>
+                    </div>
+                </div>
+
+                <div class="list-container" style="max-height: none;">
+                    <ul id="user-list" class="transaction-list">
+                        <!-- Users will be populated here -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        // Protect Route
+        const currentUser = Auth.requireAdmin();
+        const userList = document.getElementById('user-list');
+
+        function loadUsers() {
+            const users = Auth.getUsers();
+            userList.innerHTML = '';
+
+            users.forEach(user => {
+                // Skip rendering the current user in a way that prevents self-deletion/demotion easily from this specific UI logic if desired, 
+                // but usually we display everyone. Just disabling dangerous buttons for self is better UX.
+                const isSelf = user.id === currentUser.id;
+
+                const item = document.createElement('li');
+                item.className = 'transaction-item';
+
+                // Visual styles for banned users
+                if (user.isBanned) {
+                    item.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                    item.style.borderLeft = '4px solid #ef4444';
+                }
+
+                const isAdminBadge = user.isAdmin ? '<span style="color: #fbbf24; font-size: 0.8em; margin-left: 0.5rem;"><i class="fas fa-crown"></i> Admin</span>' : '';
+                const bannedBadge = user.isBanned ? '<span style="color: #ef4444; font-size: 0.8em; margin-left: 0.5rem;"><i class="fas fa-ban"></i> Yasaklı</span>' : '';
+
+                // Buttons logic
+                let actionButtons = '';
+
+                if (!isSelf) {
+                    // Admin Toggle Button
+                    const adminBtnText = user.isAdmin ? 'Yönetici Al' : 'Yönetici Yap';
+                    const adminBtnIcon = user.isAdmin ? 'fa-user-minus' : 'fa-user-plus';
+                    const adminBtnColor = user.isAdmin ? 'var(--text-dim)' : '#fbbf24';
+
+                    actionButtons += `
+                        <button class="icon-btn" onclick="toggleAdmin(${user.id})" title="${adminBtnText}" style="color: ${adminBtnColor}; margin-right: 10px;">
+                            <i class="fas ${adminBtnIcon}"></i>
+                        </button>
+                    `;
+
+                    // Ban Toggle Button
+                    const banBtnText = user.isBanned ? 'Yasağı Kaldır' : 'Yasakla';
+                    const banBtnIcon = user.isBanned ? 'fa-check' : 'fa-ban';
+                    const banBtnColor = user.isBanned ? '#34d399' : '#ef4444';
+
+                    actionButtons += `
+                        <button class="icon-btn" onclick="toggleBan(${user.id})" title="${banBtnText}" style="color: ${banBtnColor}; margin-right: 10px;">
+                            <i class="fas ${banBtnIcon}"></i>
+                        </button>
+                    `;
+
+                    // Delete Button
+                    actionButtons += `
+                        <button class="icon-btn delete-btn" onclick="deleteUser(${user.id})" title="Kullanıcıyı Sil" style="color: var(--danger-color);">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                } else {
+                    actionButtons = '<span style="font-size: 0.8rem; color: var(--text-dim);">(Siz)</span>';
+                }
+
+                item.innerHTML = `
+                    <div class="info">
+                        <h4>${user.username} ${isAdminBadge} ${bannedBadge}</h4>
+                        <span class="date">ID: ${user.id}</span>
+                    </div>
+                    <div class="amount-action">
+                        ${actionButtons}
+                    </div>
+                `;
+                userList.appendChild(item);
+            });
+        }
+
+        function deleteUser(id) {
+            if (confirm('Bu kullanıcıyı ve tüm verilerini silmek istediğinize emin misiniz?')) {
+                let users = Auth.getUsers();
+                const userToDelete = users.find(u => u.id === id);
+
+                if (userToDelete) {
+                    // Remove user
+                    users = users.filter(u => u.id !== id);
+                    localStorage.setItem('muhasebe_users', JSON.stringify(users));
+
+                    // Remove user data
+                    localStorage.removeItem(`transactions_${userToDelete.username}`);
+
+                    loadUsers();
+                }
+            }
+        }
+
+        function toggleBan(id) {
+            const users = Auth.getUsers();
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            const action = user.isBanned ? 'Yasağı kaldırmak' : 'Yasaklamak';
+            if (confirm(`Bu kullanıcıyı ${action} istediğinize emin misiniz?`)) {
+                if (user.isBanned) {
+                    Auth.unbanUser(id);
+                } else {
+                    Auth.banUser(id);
+                }
+                loadUsers();
+            }
+        }
+
+        function toggleAdmin(id) {
+            const users = Auth.getUsers();
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            const action = user.isAdmin ? 'Yöneticiliğini almak' : 'Yönetici yapmak';
+            if (confirm(`Bu kullanıcıyı ${action} istediğinize emin misiniz?`)) {
+                Auth.toggleAdmin(id);
+                loadUsers();
+            }
+        }
+
+        loadUsers();
+    </script>
+</body>
+
+</html>
