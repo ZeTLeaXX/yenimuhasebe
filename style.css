@@ -143,9 +143,18 @@ header p {
 }
 
 /* --- Dashboard Cards --- */
+/* ... (previous styles) ... */
+
+@media (max-width: 480px) {
+    body {
+        padding: 1rem;
+    }
+}
+
+/* --- Dashboard Cards --- */
 .dashboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1.5rem;
     margin-bottom: 3rem;
 }
@@ -161,6 +170,7 @@ header p {
     backdrop-filter: blur(12px);
     box-shadow: var(--shadow-card);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
 }
 
 .card:hover {
@@ -231,11 +241,12 @@ header p {
     box-shadow: var(--shadow-card);
     margin-bottom: 2rem;
     position: relative;
+    width: 100%;
 }
 
 .content-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 2rem;
     margin-bottom: 2rem;
 }
