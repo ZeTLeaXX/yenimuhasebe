@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sürüm Notları - AuraYazılım</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            background-color: var(--glass-border);
+            top: 0;
+            bottom: 0;
+            left: 20px;
+            margin-left: -1px;
+        }
+
+        .container-box {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 100%;
+        }
+
+        .container-box::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            right: -17px;
+            background-color: var(--background-dark);
+            border: 2px solid var(--primary-color);
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+            left: 12px;
+        }
+
+        .content-box {
+            padding: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .badge-major {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .badge-minor {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .version-date {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-left: 10px;
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .features-list li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .features-list li::before {
+            content: '•';
+            color: var(--primary-color);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+
+    <div class="container" style="max-width: 900px;">
+        <header
+            style="text-align: left; display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+            <div>
+                <h1><i class="fas fa-rocket"></i> Sürüm Notları</h1>
+                <p>Uygulama gelişim süreci ve yenilikler.</p>
+            </div>
+            <a href="index.html" class="btn-primary"
+                style="width: auto; background: var(--glass-bg); border: 1px solid var(--glass-border);">
+                <i class="fas fa-arrow-left"></i> Geri Dön
+            </a>
+        </header>
+
+        <div class="timeline">
+            <!-- Latest Version -->
+            <div class="container-box">
+                <div class="content-box">
+                    <span class="version-badge badge-major">v1.1.2</span>
+                    <span class="version-date">17 Şubat 2026</span>
+                    <h3>Sürüm Notları ve UI İyileştirmeleri</h3>
+                    <ul class="features-list">
+                        <li><strong>Yeni:</strong> Sürüm notları sayfası eklendi.</li>
+                        <li><strong>Düzeltme:</strong> Admin paneli mobil uyumluluk sorunları giderildi.</li>
+                        <li><strong>Düzeltme:</strong> Yatay kaydırma (horizontal scroll) sorunu çözüldü.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="container-box">
+                <div class="content-box">
+                    <span class="version-badge badge-minor">v1.1.1</span>
+                    <span class="version-date">17 Şubat 2026</span>
+                    <h3>Marka Güncellemesi</h3>
+                    <ul class="features-list">
+                        <li><strong>Yenilik:</strong> Uygulama adı "AuraYazılım" olarak güncellendi.</li>
+                        <li><strong>UI:</strong> Başlık çubuğunda şirket bilgisi gösterme özelliği eklendi.</li>
+                        <li><strong>Yükleyici:</strong> Modern kurulum ekranı tasarımı.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="container-box">
+                <div class="content-box">
+                    <span class="version-badge badge-minor">v1.1.0</span>
+                    <span class="version-date">01 Şubat 2026</span>
+                    <h3>Admin Paneli ve Lisanslama</h3>
+                    <ul class="features-list">
+                        <li><strong>Yeni:</strong> Otomatik lisans doğrulama sistemi.</li>
+                        <li><strong>Özellik:</strong> Kullanıcı engellendiğinde lisansın otomatik iptali.</li>
+                        <li><strong>Admin:</strong> Kullanıcı ve şirket yönetimi arayüzü yenilendi.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="container-box">
+                <div class="content-box">
+                    <span class="version-badge badge-major">v1.0.0</span>
+                    <span class="version-date">30 Ocak 2026</span>
+                    <h3>İlk Sürüm</h3>
+                    <ul class="features-list">
+                        <li><strong>Başlangıç:</strong> Temel gelir/gider takibi.</li>
+                        <li><strong>Özellik:</strong> Firebase entegrasyonu.</li>
+                        <li><strong>UI:</strong> Modern, cam efektli (glassmorphism) tasarım.</li>
+                        <li><strong>Raporlama:</strong> Grafiksel analiz ve PDF/Excel çıktı alma.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem; opacity: 0.5; font-size: 0.8rem;">
+            <p>&copy; 2026 AuraYazılım. Tüm hakları saklıdır.</p>
+        </div>
+    </div>
+</body>
+
+</html>

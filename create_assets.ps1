@@ -31,7 +31,11 @@ function Create-GradientImage {
         $graphics.DrawLine($pen, 40, 55, 124, 55)
     }
 
-    $bitmap.Save($outputPath, [System.Drawing.Imaging.ImageFormat]::Bmp)
+    # Convert to 24bpp (NSIS compatible)
+    $bpp24 = $bitmap.Clone([System.Drawing.Rectangle]::FromLTRB(0, 0, $bitmap.Width, $bitmap.Height), [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+    $bpp24.Save($outputPath, [System.Drawing.Imaging.ImageFormat]::Bmp)
+    $bpp24.Dispose()
+    
     $graphics.Dispose()
     $bitmap.Dispose()
     

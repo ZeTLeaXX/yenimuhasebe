@@ -10,7 +10,7 @@
   },
   "build": {
     "appId": "com.muhasebe.projesi",
-    "productName": "MuhasebeApp",
+    "productName": "AuraYazılım",
     "directories": {
       "output": "dist"
     },

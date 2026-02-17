@@ -34,7 +34,22 @@ Auth.initAuthListener(async (user) => {
         window.location.href = 'login.html';
     } else {
         currentUser = user;
-        document.getElementById('user-display').textContent = user.username || user.email;
+        let displayName = user.username || user.email;
+
+        // Fetch Company Name if assigned
+        if (user.companyId) {
+            try {
+                const companyDoc = await db.collection('companies').doc(user.companyId).get();
+                if (companyDoc.exists) {
+                    const companyName = companyDoc.data().name;
+                    displayName += ` - ${companyName}`;
+                }
+            } catch (e) {
+                console.error("Error fetching company name:", e);
+            }
+        }
+
+        document.getElementById('user-display').textContent = displayName;
         if (user.isAdmin) {
             document.getElementById('admin-link').style.display = 'flex';
         }
