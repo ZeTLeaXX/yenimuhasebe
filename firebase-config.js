@@ -15,7 +15,9 @@ firebase.initializeApp(firebaseConfig);
 // Services
 const auth = firebase.auth();
 const db = firebase.firestore();
+const rtdb = firebase.database();
 
-// Global değişken olarak erişilebilir olsun (Debugging ve diğer dosyalar için)
+// Global değişken olarak erişilebilir olsun
 window.auth = auth;
 window.db = db;
+window.rtdb = rtdb;

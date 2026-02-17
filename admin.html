@@ -14,7 +14,9 @@
     <div class="admin-container" style="max-width: 1200px; margin: 0 auto; padding: 2rem;">
         <div class="admin-header"
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; color: white;">
-            <h2><i class="fas fa-shield-alt"></i> Yönetici Paneli</h2>
+            <h2><i class="fas fa-shield-alt"></i> Yönetici Paneli <span id="header-version"
+                    style="font-size: 0.9rem; color: var(--text-dim); margin-left: 10px; font-weight: 300; opacity: 0.8;"></span>
+            </h2>
             <div style="display: flex; gap: 10px;">
                 <a href="chat.html" class="btn-primary" style="width: auto; background: var(--secondary-color);">
                     <i class="fas fa-comments"></i> Sohbet
@@ -28,26 +30,73 @@
                 </button>
             </div>
         </div>
-
         <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
             <!-- Company Management -->
             <div class="glass-panel">
+                <!-- Uygulama Güncelleme Yönetimi -->
+                <div class="card"
+                    style="background: rgba(99, 102, 241, 0.1); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border: 1px solid rgba(99, 102, 241, 0.2);">
+                    <h3 style="color:white; margin-bottom: 0.5rem;"><i class="fas fa-sync"></i> Güncelleme Yönetimi</h3>
+                    <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1rem;">Yeni bir sürüm
+                        yayınlayın ve tüm kullanıcılara ulaştırın.</p>
+
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label
+                            style="display:block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 5px;">Yeni
+                            Sürüm (Örn: 1.1.1)</label>
+                        <input type="text" id="update-version" placeholder="1.1.1"
+                            style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label
+                            style="display:block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 5px;">İndirme
+                            Linki (.exe)</label>
+                        <input type="text" id="update-url" placeholder="https://..."
+                            style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 4px;">
+                    </div>
+
+                    <button onclick="publishUpdate()" class="btn-primary"
+                        style="width: 100%; background: var(--primary-color);">
+                        <i class="fas fa-paper-plane"></i> Güncellemeyi Yayınla
+                    </button>
+                </div>
+
                 <div class="section-title"
                     style="color: var(--text-dim); margin-bottom: 1rem; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
                     <span><i class="fas fa-building"></i> Şirketler</span>
                     <button class="btn-primary" style="width: auto; padding: 0.5rem 1rem; font-size: 0.8rem;"
                         onclick="showAddCompanyModal()">+ Yeni</button>
                 </div>
+
+                <!-- Test Data Button -->
+                <div class="card"
+                    style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.05);">
+                    <h3 style="color:white; margin-bottom: 0.5rem;">Test Verisi</h3>
+                    <p style="color: var(--text-dim); font-size: 0.9rem;">Belirtilen şirkete 100 adet rastgele işlem
+                        ekler.</p>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <input type="text" id="target-company-name" placeholder="Şirket Adı (Örn: Yen Şirket)"
+                            style="flex:1; padding:8px; background: rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); color: white; border-radius:4px;">
+                        <button onclick="generateTestData()" class="btn-primary"
+                            style="width: auto; background-color: #8b5cf6;">Veri Ekle</button>
+                    </div>
+                </div>
+
                 <ul id="company-list" class="list-group"
                     style="list-style: none; padding: 0; max-height: 500px; overflow-y: auto;">
                     <!-- Loaded dynamically -->
                 </ul>
-            </div>
 
+            </div>
             <!-- User Management -->
             <div class="glass-panel">
-                <div class="section-title" style="color: var(--text-dim); margin-bottom: 1rem; font-size: 1.2rem;">
+                <div class="section-title"
+                    style="color: var(--text-dim); margin-bottom: 1rem; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center;">
                     <span><i class="fas fa-users"></i> Kullanıcılar & Atamalar</span>
+                    <button class="btn-primary"
+                        style="width: auto; padding: 0.5rem 1rem; font-size: 0.8rem; background: var(--success-color);"
+                        onclick="showAddUserModal()">+ Kullanıcı Ekle</button>
                 </div>
                 <ul id="user-list" class="list-group"
                     style="list-style: none; padding: 0; max-height: 500px; overflow-y: auto;">
@@ -113,7 +162,35 @@
         }
     </style>
 
-    <!-- Add Company Modal -->
+    <!-- Add User Modal -->
+    <div id="user-modal" class="modal"
+        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;">
+        <div class="glass-panel" style="width: 400px; padding: 2rem; position: relative;">
+            <h3 style="margin-bottom: 1.5rem; color: white;">Yeni Kullanıcı Ekle</h3>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; color: var(--text-dim); margin-bottom: 0.5rem;">Kullanıcı Adı</label>
+                <input type="text" id="new-user-name"
+                    style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="display: block; color: var(--text-dim); margin-bottom: 0.5rem;">E-posta</label>
+                <input type="email" id="new-user-email"
+                    style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label style="display: block; color: var(--text-dim); margin-bottom: 0.5rem;">Şifre</label>
+                <input type="password" id="new-user-password"
+                    style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;">
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button onclick="closeUserModal()" class="btn-primary"
+                    style="background: var(--text-dim); width: auto;">İptal</button>
+                <button onclick="saveUser()" class="btn-primary" style="width: auto;">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Modal Content (Unchanged) -->
     <div id="company-modal" class="modal"
         style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center;">
         <div class="glass-panel" style="width: 400px; padding: 2rem; position: relative;">
@@ -140,8 +217,13 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="auth.js"></script>
+    <div id="version-display"
+        style="position: fixed; bottom: 10px; right: 10px; font-size: 0.75rem; color: var(--text-dim); opacity: 0.6; pointer-events: none; z-index: 1000;">
+        v0.0.0
+    </div>
     <script src="admin.js"></script>
 </body>
 

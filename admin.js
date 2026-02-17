@@ -225,6 +225,48 @@ async function deleteCompany(id) {
     }
 }
 
+// User Creation Modals
+window.showAddUserModal = function () {
+    const modal = document.getElementById('user-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('new-user-name').value = '';
+        document.getElementById('new-user-email').value = '';
+        document.getElementById('new-user-password').value = '';
+        document.getElementById('new-user-name').focus();
+    }
+}
+
+window.closeUserModal = function () {
+    const modal = document.getElementById('user-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+window.saveUser = async function () {
+    const username = document.getElementById('new-user-name').value;
+    const email = document.getElementById('new-user-email').value;
+    const password = document.getElementById('new-user-password').value;
+
+    if (!username || !email || !password) {
+        alert("Lütfen tüm alanları doldurun.");
+        return;
+    }
+
+    try {
+        // We use the Auth.register helper we already have
+        const result = await Auth.register(username, email, password);
+        if (result.success) {
+            alert("Kullanıcı başarıyla oluşturuldu.");
+            closeUserModal();
+        } else {
+            alert("Hata: " + result.message);
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Sistem hatası: " + error.message);
+    }
+}
+
 // User Actions
 async function assignUser(userId, companyId) {
     try {
@@ -258,3 +300,123 @@ function deleteUser(id) {
         db.collection('users').doc(id).delete();
     }
 }
+
+// Test Data Generator (Bulk Insert 100)
+window.generateTestData = async function () {
+    const nameInput = document.getElementById('target-company-name');
+    const targetName = nameInput.value.trim();
+
+    if (!targetName) {
+        alert("Lütfen şirket adı girin.");
+        return;
+    }
+
+    // Find company by name (case-insensitive)
+    const company = allCompanies.find(c => c.name.toLowerCase() === targetName.toLowerCase());
+
+    if (!company) {
+        alert("Şirket bulunamadı! Lütfen tam adını doğru yazdığınızdan emin olun.\nListeden kopyalayabilirsiniz.");
+        return;
+    }
+
+    if (!confirm(`"${company.name}" şirketi için 100 adet RASTGELE işlem eklenecek.\nBu işlem geri alınamaz (tek tek silmeniz gerekir).\nDevam ediyor musunuz?`)) return;
+
+    // Random Data Source
+    const descriptions = ['Ofis Malzemeleri', 'Müşteri Ödemesi', 'Danışmanlık Faturası', 'Sunucu Kirası', 'Çay Kahve', 'Taksi Fişi', 'Yazılım Lisansı', 'Reklam Gideri', 'Personel Avansı', 'Ürün Satışı'];
+    const categories = ['Satış', 'Hizmet', 'Genel Gider', 'Ulaşım', 'Yemek', 'Teknoloji', 'Pazarlama', 'Maaş'];
+
+    const batch = db.batch();
+    const collectionRef = db.collection('transactions');
+
+    console.log(`Generating 100 transactions for ${company.name}...`);
+
+    // Generate 100 items
+    for (let i = 0; i < 100; i++) {
+        // Random Logic
+        const isIncome = Math.random() > 0.4; // 60% Income
+        const type = isIncome ? 'income' : 'expense';
+        const amount = Math.floor(Math.random() * 5000) + 100; // 100 - 5100 TL
+        const desc = descriptions[Math.floor(Math.random() * descriptions.length)] + ` #${Math.floor(Math.random() * 1000)}`;
+        const cat = categories[Math.floor(Math.random() * categories.length)];
+
+        // Random Date (Last 6 Months)
+        const date = new Date();
+        date.setDate(date.getDate() - Math.floor(Math.random() * 180));
+
+        const docRef = collectionRef.doc(); // Auto ID
+        batch.set(docRef, {
+            description: desc,
+            amount: amount,
+            type: type,
+            category: cat,
+            date: firebase.firestore.Timestamp.fromDate(date),
+            companyId: company.id,
+            companyCode: company.code,
+            userId: currentUser.uid,
+            addedBy: 'Admin (Test)',
+            receiptUrl: null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    try {
+        await batch.commit();
+        alert(`Bitti! "${company.name}" için 100 adet işlem başarıyla eklendi.`);
+        nameInput.value = ''; // Reset input
+    } catch (error) {
+        console.error("Batch insert error:", error);
+        alert("Hata oluştu: " + error.message);
+    }
+}
+
+// --- Uygulama Güncelleme Yönetimi ---
+window.publishUpdate = async function () {
+    const version = document.getElementById('update-version').value.trim();
+    const url = document.getElementById('update-url').value.trim();
+
+    if (!version || !url) {
+        alert("Lütfen hem versiyon numarasını hem de indirme linkini girin.");
+        return;
+    }
+
+    try {
+        await rtdb.ref('app_config').set({
+            latestVersion: version,
+            downloadUrl: url
+        });
+        alert("Güncelleme başarıyla yayınlandı! Tüm kullanıcılar bir sonraki açılışta bu sürümü görecektir.");
+    } catch (error) {
+        console.error("Güncelleme yayınlama hatası:", error);
+        alert("Hata oluştu: " + error.message);
+    }
+}
+
+async function loadUpdateSettings() {
+    try {
+        const snapshot = await rtdb.ref('app_config').once('value');
+        const data = snapshot.val();
+        if (data) {
+            document.getElementById('update-version').value = data.latestVersion || '';
+            document.getElementById('update-url').value = data.downloadUrl || '';
+        }
+    } catch (e) {
+        console.warn("Mevcut güncelleme ayarları yüklenemedi:", e);
+    }
+}
+
+// Sayfa yüklendiğinde mevcut ayarları getir
+document.addEventListener('DOMContentLoaded', async () => {
+    loadUpdateSettings();
+
+    // Sürümü Görüntüle
+    try {
+        if (window.electronAPI && window.electronAPI.getAppVersion) {
+            const version = await window.electronAPI.getAppVersion();
+            document.getElementById('version-display').textContent = `v${version}`;
+            const headerVer = document.getElementById('header-version');
+            if (headerVer) headerVer.textContent = `(v${version})`;
+        }
+    } catch (e) {
+        console.warn("Sürüm yüklenemedi:", e);
+    }
+});

@@ -3,9 +3,20 @@ let allHistoryTransactions = [];
 let currentUser = null;
 
 // Initialize Auth
-Auth.initAuthListener((user) => {
+Auth.initAuthListener(async (user) => {
     if (user) {
         currentUser = user;
+
+        // Display Version
+        try {
+            if (window.electronAPI && window.electronAPI.getAppVersion) {
+                const version = await window.electronAPI.getAppVersion();
+                document.getElementById('version-display').textContent = `v${version}`;
+            }
+        } catch (e) {
+            console.warn("Version could not be loaded:", e);
+        }
+
         loadHistoryTransactions();
     } else {
         window.location.href = 'login.html';
@@ -25,7 +36,7 @@ function loadHistoryTransactions() {
 
     db.collection('transactions')
         .where('companyId', '==', currentUser.companyId) // Shared Workspace
-        .orderBy('date', 'desc')
+        // .orderBy('date', 'desc') // REMOVED: Causes Missing Index Error
         .onSnapshot(snapshot => {
             allHistoryTransactions = [];
 
@@ -33,10 +44,19 @@ function loadHistoryTransactions() {
                 allHistoryTransactions.push({ id: doc.id, ...doc.data() });
             });
 
+            // Client-side Sort (Newest Date First)
+            allHistoryTransactions.sort((a, b) => {
+                const dateA = a.date ? a.date.toDate() : new Date(0);
+                const dateB = b.date ? b.date.toDate() : new Date(0);
+                return dateB - dateA;
+            });
+
             renderHistoryTable(allHistoryTransactions);
+            // Re-apply filters if any
+            filterHistory();
         }, error => {
             console.error("Error loading history:", error);
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1rem; color:var(--danger-color);">Veriler yüklenirken hata oluştu.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1rem; color:var(--danger-color);">Veriler yüklenirken hata oluştu: ' + error.message + '</td></tr>';
         });
 }
 

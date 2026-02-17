@@ -1,4 +1,9 @@
-// Minimal preload script if needed later
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+    getAppVersion: () => ipcRenderer.invoke('get-app-version')
+});
+
 window.addEventListener('DOMContentLoaded', () => {
     console.log('Electron Preload Loaded');
 });

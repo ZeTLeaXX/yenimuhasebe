@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güncelleme Hazır</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --card: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-dim: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .update-card {
+            background: var(--card);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .rocket {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        h2 {
+            margin: 0 0 0.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .version-tag {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+            padding: 0.2rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .progress-box {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="update-card">
+        <div class="rocket">🚀</div>
+        <h2>Yeni Sürüm Hazır!</h2>
+        <div class="version-tag" id="versionTag">v1.1.0</div>
+        <p>Muhasebe uygulamanız için yeni özellikler ve iyileştirmeler içeren bir güncelleme mevcut.</p>
+
+        <div id="btnGroup">
+            <button class="btn" id="updateBtn">Şimdi Güncelle</button>
+        </div>
+
+        <div class="progress-box" id="progressBox">
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="status-text" id="statusText">İndirme başlatılıyor...</div>
+            <div id="logBox"
+                style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-size: 0.7rem; color: var(--text-dim); text-align: left; max-height: 80px; overflow-y: auto; display: none; line-height: 1.4;">
+                <!-- Logs will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer, shell } = require('electron');
+        let downloadLink = "";
+
+        ipcRenderer.on('update-data', (event, config) => {
+            document.getElementById('versionTag').innerText = config.latestVersion;
+            downloadLink = config.downloadUrl;
+        });
+
+        document.getElementById('updateBtn').addEventListener('click', () => {
+            if (downloadLink) {
+                document.getElementById('btnGroup').style.display = 'none';
+                document.getElementById('progressBox').style.display = 'block';
+                document.getElementById('logBox').style.display = 'block';
+                ipcRenderer.send('start-download', downloadLink);
+            }
+        });
+
+        ipcRenderer.on('download-log', (event, log) => {
+            const logBox = document.getElementById('logBox');
+            const div = document.createElement('div');
+            div.textContent = `> ${log}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        });
+
+        ipcRenderer.on('download-progress', (event, percent) => {
+            const fill = document.getElementById('progressFill');
+            const text = document.getElementById('statusText');
+            if (percent === -1) {
+                fill.style.width = '100%';
+                fill.style.animation = 'pulse 1s infinite';
+                text.innerText = `İndiriliyor (Dosya boyutu hesaplanıyor...)`;
+            } else {
+                fill.style.width = percent + '%';
+                fill.style.animation = 'none';
+                text.innerText = `İndiriliyor: %${percent}`;
+            }
+        });
+
+        ipcRenderer.on('download-complete', (event, filePath) => {
+            const text = document.getElementById('statusText');
+            text.innerText = 'Tamamlandı! Kurulum başlatılıyor...';
+            text.style.color = 'var(--success)';
+
+            setTimeout(() => {
+                shell.openPath(filePath).then(err => {
+                    if (err) {
+                        text.innerText = 'Otomatik başlatılamadı. Lütfen dosyayı manuel açın.';
+                        shell.showItemInFolder(filePath);
+                    }
+                });
+            }, 1000);
+        });
+
+        ipcRenderer.on('download-error', (event, msg) => {
+            const text = document.getElementById('statusText');
+            text.innerText = 'Hata: ' + msg;
+            text.style.color = 'var(--danger)';
+            document.getElementById('btnGroup').style.display = 'block';
+        });
+    </script>
+</body>
+
+</html>

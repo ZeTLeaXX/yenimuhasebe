@@ -17,9 +17,19 @@ let myChart = null;
 
 let currentUser = null;
 let allTransactions = []; // Local copy for filtering
+let allCategories = []; // Dynamic Categories
+
+// Category DOM Elements
+const categorySelect = document.getElementById('category');
+const manageCatsBtn = document.getElementById('manage-cats-btn');
+const categoryModal = document.getElementById('category-modal');
+const closeCatModal = document.getElementById('close-cat-modal');
+const newCatInput = document.getElementById('new-cat-input');
+const addCatBtn = document.getElementById('add-cat-btn');
+const categoryListManager = document.getElementById('category-list-manager');
 
 // Auth Listener
-Auth.initAuthListener((user) => {
+Auth.initAuthListener(async (user) => {
     if (!user) {
         window.location.href = 'login.html';
     } else {
@@ -29,15 +39,164 @@ Auth.initAuthListener((user) => {
             document.getElementById('admin-link').style.display = 'flex';
         }
 
+        // Display Version
+        try {
+            if (window.electronAPI && window.electronAPI.getAppVersion) {
+                const version = await window.electronAPI.getAppVersion();
+                document.getElementById('version-display').textContent = `v${version}`;
+            }
+        } catch (e) {
+            console.warn("Version could not be loaded:", e);
+        }
+
         // Logout Handler
         const logoutBtn = document.getElementById('logout-btn');
         const newLogoutBtn = logoutBtn.cloneNode(true);
         logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
         newLogoutBtn.addEventListener('click', () => Auth.logout());
 
+        // Copy Customer Link Handler
+        const copyLinkBtn = document.getElementById('copy-customer-link-btn');
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', () => {
+                if (currentUser && currentUser.companyId) {
+                    // Construct a generic web-ready link assuming equivalent hosting structure
+                    const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+                    const link = `${baseUrl}/customer.html?id=${currentUser.companyId}`;
+
+                    navigator.clipboard.writeText(link).then(() => {
+                        alert("Müşteri paneli linki kopyalandı:\n" + link + "\n\nBu linki müşterilerinize gönderebilirsiniz.");
+                    }).catch(err => {
+                        console.error('Link kopyalanamadı:', err);
+                        prompt("Link kopyalanamadı. Lütfen manuel seçin:", link);
+                    });
+                }
+            });
+        }
+
+        // Init Data
+        await loadCategories();
         initTransactions();
+
+        // Category Events
+        setupCategoryEvents();
     }
 });
+
+// --- Category Management ---
+function setupCategoryEvents() {
+    manageCatsBtn.addEventListener('click', () => {
+        categoryModal.style.display = 'flex';
+        renderCategoryManager();
+    });
+
+    closeCatModal.addEventListener('click', () => {
+        categoryModal.style.display = 'none';
+    });
+
+    // Close on outside click
+    window.addEventListener('click', (e) => {
+        if (e.target == categoryModal) {
+            categoryModal.style.display = 'none';
+        }
+    });
+
+    addCatBtn.addEventListener('click', addNewCategory);
+}
+
+async function loadCategories() {
+    if (!currentUser.companyId) return;
+
+    // Default Categories
+    const defaultCategories = [
+        "Maaş", "Satış", "Yatırım", "Kira",
+        "Fatura", "Market", "Ulaşım", "Eğlence",
+        "Sağlık", "Diğer"
+    ];
+
+    try {
+        const docRef = db.collection('settings').doc(currentUser.companyId);
+        const doc = await docRef.get();
+
+        if (doc.exists && doc.data().categories) {
+            allCategories = doc.data().categories;
+        } else {
+            // First time: save defaults
+            allCategories = [...defaultCategories];
+            await docRef.set({ categories: allCategories }, { merge: true });
+        }
+
+        populateCategorySelect();
+
+    } catch (error) {
+        console.error("Error loading categories:", error);
+        allCategories = [...defaultCategories];
+        populateCategorySelect();
+    }
+}
+
+function populateCategorySelect() {
+    categorySelect.innerHTML = '';
+    allCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categorySelect.appendChild(option);
+    });
+}
+
+function renderCategoryManager() {
+    categoryListManager.innerHTML = '';
+    allCategories.forEach((cat, index) => {
+        const li = document.createElement('li');
+        li.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 8px;";
+
+        li.innerHTML = `
+            <span>${cat}</span>
+            <button onclick="deleteCategory(${index})" style="background:none; border:none; color:var(--danger-color); cursor:pointer;">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        categoryListManager.appendChild(li);
+    });
+}
+
+async function addNewCategory() {
+    const name = newCatInput.value.trim();
+    if (!name) return;
+
+    if (allCategories.includes(name)) {
+        alert("Bu kategori zaten mevcut.");
+        return;
+    }
+
+    allCategories.push(name);
+    newCatInput.value = '';
+
+    await saveCategories();
+    populateCategorySelect();
+    renderCategoryManager();
+}
+
+window.deleteCategory = async function (index) {
+    if (confirm(`${allCategories[index]} kategorisini silmek istediğinize emin misiniz?`)) {
+        allCategories.splice(index, 1);
+        await saveCategories();
+        populateCategorySelect();
+        renderCategoryManager();
+    }
+};
+
+async function saveCategories() {
+    try {
+        await db.collection('settings').doc(currentUser.companyId).set({
+            categories: allCategories
+        }, { merge: true });
+    } catch (error) {
+        console.error("Error saving categories:", error);
+        alert("Kategori kaydedilirken hata oluştu.");
+    }
+}
 
 function initTransactions() {
     // Realtime Listener
@@ -87,6 +246,7 @@ function applyFilters() {
     // Actually, usually users want to see totals of what they see. Let's do totals of ALL first.
     updateValues(allTransactions);
     renderChart(allTransactions);
+    calculateAdvancedStats(allTransactions);
 }
 
 // Event Listeners for Filters
@@ -146,7 +306,18 @@ function updateValues(transactions) {
     totalExpenseElement.innerText = `₺${formatMoney(expense)}`;
 }
 
-// Chart.js Rendering
+// Chart Global Defaults
+Chart.defaults.color = '#ffffff';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+
+// Vibrant Color Palette for many categories
+const VIBRANT_COLORS = [
+    '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#a855f7',
+    '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#8b5cf6',
+    '#06b6d4', '#d946ef', '#84cc16', '#f43f5e', '#2dd4bf',
+    '#eab308', '#6366f1', '#fb923c', '#4ade80', '#60a5fa'
+];
+
 function renderChart(transactions) {
     const ctx = document.getElementById('analysisChart').getContext('2d');
 
@@ -167,7 +338,7 @@ function renderChart(transactions) {
     if (hasExpenses) {
         labels = Object.keys(categories);
         data = Object.values(categories);
-        colors = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#a855f7', '#ec4899', '#6366f1'];
+        colors = VIBRANT_COLORS;
     } else {
         // Show Income vs Expense general
         const income = transactions.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
@@ -197,16 +368,128 @@ function renderChart(transactions) {
             plugins: {
                 legend: {
                     position: 'right',
-                    labels: { color: 'white' }
+                    labels: {
+                        color: '#ffffff', // Explicitly bright white
+                        font: {
+                            size: 13,
+                            family: "'Outfit', sans-serif",
+                            weight: '500'
+                        },
+                        padding: 20,
+                        generateLabels: (chart) => {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                return data.labels.map((label, i) => {
+                                    const value = data.datasets[0].data[i];
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return {
+                                        text: `${label}: %${percentage} (₺${formatMoney(value)})`,
+                                        fillStyle: data.datasets[0].backgroundColor[i % data.datasets[0].backgroundColor.length],
+                                        fontColor: '#ffffff', // Some versions use this
+                                        strokeStyle: '#ffffff',
+                                        lineWidth: 0,
+                                        hidden: isNaN(data.datasets[0].data[i]) || chart.getDatasetMeta(0).data[i].hidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
+                    }
+                },
+                tooltip: {
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ₺${formatMoney(value)} (%${percentage})`;
+                        }
+                    }
                 },
                 title: {
                     display: true,
                     text: hasExpenses ? 'Gider Dağılımı' : 'Gelir - Gider Dengesi',
-                    color: 'white'
+                    color: '#ffffff'
                 }
             }
         }
     });
+
+    // Update Percentage Summary List
+    const percentSummary = document.getElementById('percent-summary');
+    if (percentSummary && hasExpenses) {
+        percentSummary.innerHTML = '';
+        const total = data.reduce((a, b) => a + b, 0);
+        labels.forEach((label, i) => {
+            const percentage = ((data[i] / total) * 100).toFixed(1);
+            const li = document.createElement('li');
+            li.style.color = '#ffffff'; // Legible white text
+            li.style.marginBottom = '5px';
+            const colorCircle = `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:${colors[i % colors.length]}; margin-right:8px;"></span>`;
+            li.innerHTML = `${colorCircle}<strong>%${percentage}</strong> - ${label}`;
+            percentSummary.appendChild(li);
+        });
+    }
+}
+
+// Advanced Analysis Metrics
+function calculateAdvancedStats(transactions) {
+    const incomeFreqEl = document.getElementById('income-frequency');
+    const expenseFreqEl = document.getElementById('expense-frequency');
+    const forecastBalanceEl = document.getElementById('forecast-balance');
+    const forecastTrendEl = document.getElementById('forecast-trend');
+
+    if (!incomeFreqEl || !expenseFreqEl || !forecastBalanceEl) return;
+
+    const incomes = transactions.filter(t => t.type === 'income').sort((a, b) => a.date.toDate() - b.date.toDate());
+    const expenses = transactions.filter(t => t.type === 'expense').sort((a, b) => a.date.toDate() - b.date.toDate());
+
+    const getFrequency = (list) => {
+        if (list.length < 2) return "Veri yetersiz";
+        const first = list[0].date.toDate();
+        const last = list[list.length - 1].date.toDate();
+        const diffDays = Math.max(1, (last - first) / (1000 * 60 * 60 * 24));
+        const avgDays = (diffDays / (list.length - 1)).toFixed(1);
+        return `Ort. ${avgDays} günde bir`;
+    };
+
+    incomeFreqEl.querySelector('span').textContent = getFrequency(incomes);
+    expenseFreqEl.querySelector('span').textContent = getFrequency(expenses);
+
+    // 30 Day Forecast
+    // Logic: Calculate daily burn/earn rate over the last 90 days (or all available)
+    const now = new Date();
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(now.getDate() - 90);
+
+    const recentTransactions = transactions.filter(t => t.date.toDate() > ninetyDaysAgo);
+    const totalDays = recentTransactions.length > 0 ?
+        Math.max(1, (now - Math.min(...recentTransactions.map(t => t.date.toDate()))) / (1000 * 60 * 60 * 24)) : 30;
+
+    const totalRecentIncome = recentTransactions.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
+    const totalRecentExpense = recentTransactions.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
+
+    const dailyIncomeRate = totalRecentIncome / totalDays;
+    const dailyExpenseRate = totalRecentExpense / totalDays;
+    const dailyNet = dailyIncomeRate - dailyExpenseRate;
+
+    const forecast30Days = (dailyNet * 30);
+    const currentBalance = transactions.reduce((acc, t) => t.type === 'income' ? acc + t.amount : acc - t.amount, 0);
+    const finalForecast = currentBalance + forecast30Days;
+
+    forecastBalanceEl.textContent = `₺${formatMoney(finalForecast)}`;
+    forecastBalanceEl.style.color = finalForecast >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+
+    if (dailyNet > 0) {
+        forecastTrendEl.textContent = "Olumlu trend: Aylık ₺" + formatMoney(forecast30Days) + " artış bekleniyor.";
+    } else {
+        forecastTrendEl.textContent = "Riskli trend: Aylık ₺" + formatMoney(Math.abs(forecast30Days)) + " azalma bekleniyor.";
+    }
 }
 
 // Add Transaction
@@ -437,6 +720,85 @@ async function exportToPDF() {
     doc.setFontSize(11);
     doc.text(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`, 14, 30);
 
+    // Capture Chart Image (High Quality & Without Legend)
+    const chartCanvas = document.getElementById('analysisChart');
+    let chartImage = null;
+    if (chartCanvas && myChart) {
+        // Create a temporary hi-res canvas
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 1500; // Large size for professional sharpness
+        tempCanvas.height = 1500;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Create a temporary high-resolution chart
+        const tempChart = new Chart(tempCtx, {
+            type: 'doughnut',
+            data: JSON.parse(JSON.stringify(myChart.data)),
+            options: {
+                responsive: false,
+                animation: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: false }
+                }
+            }
+        });
+
+        chartImage = tempCanvas.toDataURL('image/png', 1.0);
+        tempChart.destroy();
+    }
+
+    // Analysis Summary in PDF (Professional Layout)
+    let summaryY = 42;
+    doc.setFont("Roboto", "normal");
+    doc.setFontSize(16);
+    doc.setTextColor(99, 102, 241);
+    doc.text("Finansal Analiz Ozeti", 14, summaryY); // Avoiding special chars in titles just in case
+
+    // Draw a subtle line under header
+    doc.setDrawColor(99, 102, 241);
+    doc.setLineWidth(0.5);
+    doc.line(14, summaryY + 2, 196, summaryY + 2);
+
+    summaryY += 12;
+
+    const expensesForAnalysis = allTransactions.filter(t => t.type === 'expense');
+    const totalExpenseForAnalysis = expensesForAnalysis.reduce((a, b) => a + b.amount, 0);
+    const categoryMap = {};
+    expensesForAnalysis.forEach(t => {
+        const cat = t.category || 'Diger';
+        categoryMap[cat] = (categoryMap[cat] || 0) + t.amount;
+    });
+
+    // Add Chart Image if available (Center-Right, No legend)
+    if (chartImage) {
+        doc.addImage(chartImage, 'PNG', 125, summaryY - 5, 65, 65);
+    }
+
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.setFont("Roboto", "normal"); // Systematically use normal to avoid encoding mismatch
+
+    let currentSumY = summaryY + 5;
+
+    // Sort categories by percentage for better reading
+    const sortedCats = Object.keys(categoryMap).sort((a, b) => categoryMap[b] - categoryMap[a]);
+
+    sortedCats.forEach((cat, index) => {
+        const val = categoryMap[cat];
+        const perc = totalExpenseForAnalysis > 0 ? ((val / totalExpenseForAnalysis) * 100).toFixed(1) : 0;
+
+        // Stylish Bullet Point
+        doc.setFillColor(99, 102, 241);
+        doc.circle(16, currentSumY - 1, 0.8, 'F');
+
+        // Clean text drawing without bold (Bold requires separate font registration)
+        doc.text(`${cat}: %${perc} (₺${formatMoney(val)})`, 20, currentSumY);
+
+        currentSumY += 7;
+    });
+
+    const startTableY = Math.max(currentSumY + 15, summaryY + 75);
     const tableColumn = ["Tarih", "Aciklama", "Kategori", "Tutar", "Tur", "Ekleyen"];
     const tableRows = [];
 
@@ -448,16 +810,16 @@ async function exportToPDF() {
         return dateA - dateB; // Ascending
     });
 
-    let totalIncome = 0;
-    let totalExpense = 0;
+    let totalIncomePdf = 0;
+    let totalExpensePdf = 0;
 
     sortedTransactions.forEach(row => {
         const date = row.date ? row.date.toDate().toLocaleDateString('tr-TR') : '';
         const type = row.type === 'income' ? 'Gelir' : 'Gider';
 
         // Calculate totals
-        if (row.type === 'income') totalIncome += Number(row.amount);
-        if (row.type === 'expense') totalExpense += Number(row.amount);
+        if (row.type === 'income') totalIncomePdf += Number(row.amount);
+        if (row.type === 'expense') totalExpensePdf += Number(row.amount);
 
         const transactionData = [
             date,
@@ -473,7 +835,7 @@ async function exportToPDF() {
     doc.autoTable({
         head: [tableColumn],
         body: tableRows,
-        startY: 40,
+        startY: startTableY,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241] }, // Primary Color
         styles: { font: "Roboto", fontSize: 9 }, // Use Roboto here too
@@ -487,14 +849,14 @@ async function exportToPDF() {
 
     doc.setFontSize(12);
     doc.setTextColor(16, 185, 129); // Success Color
-    doc.text(`Toplam Gelir: ₺${formatMoney(totalIncome)}`, 14, finalY);
+    doc.text(`Toplam Gelir: ₺${formatMoney(totalIncomePdf)}`, 14, finalY);
 
     doc.setTextColor(239, 68, 68); // Danger Color
-    doc.text(`Toplam Gider: ₺${formatMoney(totalExpense)}`, 14, finalY + 7);
+    doc.text(`Toplam Gider: ₺${formatMoney(totalExpensePdf)}`, 14, finalY + 7);
 
-    const netBalance = totalIncome - totalExpense;
+    const netBalancePdf = totalIncomePdf - totalExpensePdf;
     doc.setTextColor(99, 102, 241); // Primary Color
-    doc.text(`Net Bakiye: ₺${formatMoney(netBalance)}`, 14, finalY + 14);
+    doc.text(`Net Bakiye: ₺${formatMoney(netBalancePdf)}`, 14, finalY + 14);
 
     doc.save(`muhasebe_raporu_${new Date().toLocaleDateString('tr-TR')}.pdf`);
 }

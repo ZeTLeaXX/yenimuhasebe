@@ -136,9 +136,24 @@
                     <span><i class="fas fa-building"></i> Şirketler</span>
                     <button class="btn-primary btn-sm" onclick="showAddCompanyModal()">+ Yeni</button>
                 </div>
-                <ul id="company-list" class="list-group">
-                    <!-- Loaded dynamically -->
-                </ul>
+                <!-- Test Data Button -->
+                <div class="card">
+                    <h3>Test Verisi</h3>
+                    <p>Belirtilen şirkete 100 adet rastgele işlem ekler.</p>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <input type="text" id="target-company-name" placeholder="Şirket Adı (Örn: Yen Şirket)"
+                            style="flex:1; padding:8px; border-radius:4px; border:1px solid #ddd;">
+                        <button onclick="generateTestData()" class="btn-primary" style="background-color: #8b5cf6;">Veri
+                            Ekle</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Şirket Listesi</h3>
+                    <ul id="company-list" class="user-list">
+                        <!-- Companies will be loaded here -->
+                    </ul>
+                </div>
             </div>
 
             <!-- User Management -->
