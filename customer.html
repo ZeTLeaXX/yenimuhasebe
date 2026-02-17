@@ -67,9 +67,13 @@
                 </div>
 
                 <!-- Filters -->
-                <div class="filters" style="display: flex; gap: 10px; margin-bottom: 1rem;">
-                    <input type="text" id="search-input" placeholder="Ara..." style="flex: 1;">
-                    <select id="filter-type" style="width: 120px;">
+                <!-- Filters -->
+                <div class="filters">
+                    <div class="search-wrapper">
+                        <input type="text" id="search-input" placeholder="İşlem ara...">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <select id="filter-type">
                         <option value="all">Tümü</option>
                         <option value="income">Gelir</option>
                         <option value="expense">Gider</option>
