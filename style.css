@@ -47,6 +47,7 @@ html {
 
 body {
     width: 100%;
+    max-width: 100vw;
     min-height: 100%;
     margin: 0;
     padding: 2rem;
@@ -60,6 +61,17 @@ body {
 
 
 /* --- Dynamic Background --- */
+.background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+}
+
 .background-shapes .shape {
     position: absolute;
     border-radius: 50%;
@@ -449,6 +461,7 @@ button {
 /* --- Search & Filters --- */
 .filters {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1.5rem;
     background: rgba(255, 255, 255, 0.03);
