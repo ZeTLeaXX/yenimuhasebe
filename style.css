@@ -43,7 +43,8 @@ body {
     width: 100%;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+    overflow-x: hidden !important;
+    position: relative;
     /* Fix horizontal scroll */
 }
 
@@ -109,6 +110,18 @@ body {
 header {
     text-align: center;
     margin-bottom: 3rem;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    header .btn-primary {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+
+    header>div {
+        flex-wrap: wrap;
+    }
 }
 
 header h1 {
@@ -220,7 +233,7 @@ header p {
 
 .content-grid {
     display: grid;
-    grid-template-columns: 350px 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     margin-bottom: 2rem;
 }
