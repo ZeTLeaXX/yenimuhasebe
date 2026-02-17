@@ -1,4 +1,6 @@
-﻿KULLANICI SÖZLEŞMESİ VE SORUMLULUK REDDİ
+
+const fs = require('fs');
+const content = `KULLANICI SÖZLEŞMESİ VE SORUMLULUK REDDİ
 
 BU YAZILIMI YÜKLEMEDEN ÖNCE LÜTFEN AŞAĞIDAKİ ŞARTLARI DİKKATLİCE OKUYUNUZ.
 
@@ -11,3 +13,8 @@ Kullanıcılar, verilerini düzenli olarak yedeklemekle yükümlüdür. Oluşabi
 
 3. KABUL
 Bu yazılımı yükleyerek, kopyalayarak veya kullanarak, bu sözleşmenin tüm şartlarını okuduğunuzu, anladığınızı ve kabul ettiğinizi beyan etmiş olursunuz. Eğer bu şartları kabul etmiyorsanız, kurulumu iptal ediniz ve yazılımı kullanmayınız.
+`;
+
+// Write with BOM
+fs.writeFileSync('license.txt', '\ufeff' + content, { encoding: 'utf8' });
+console.log('License file created with BOM.');

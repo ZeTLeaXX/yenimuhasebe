@@ -20,7 +20,9 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "license": "license.txt"
+      "license": "license.txt",
+      "installerSidebar": "build/installer_sidebar.bmp",
+      "installerHeader": "build/installer_header.bmp"
     }
   },
   "keywords": [],
