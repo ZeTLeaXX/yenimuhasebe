@@ -38,24 +38,26 @@
     font-family: 'Outfit', sans-serif;
 }
 
-html,
-body {
+html {
     width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
-    overflow-x: hidden !important;
-    position: relative;
-    /* Fix horizontal scroll */
 }
 
 body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: 2rem;
+    overflow-x: hidden !important;
+    position: relative;
     background-color: var(--background-dark);
     color: var(--text-light);
-    min-height: 100vh;
-    padding: 2rem;
-    position: relative;
     line-height: 1.6;
 }
+
+
 
 /* --- Dynamic Background --- */
 .background-shapes .shape {
@@ -328,9 +330,11 @@ button {
 
 /* --- List & History --- */
 .list-container {
-    max-height: 500px;
+    max-height: 60vh;
     overflow-y: auto;
     padding-right: 0.5rem;
+    overscroll-behavior: contain;
+    /* Prevents scroll chaining/trapping issues */
 }
 
 .transaction-list {
